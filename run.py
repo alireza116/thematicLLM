@@ -132,6 +132,12 @@ def parse_args():
         action="store_true",
         help="Print a token and cost estimate then exit (no API calls made).",
     )
+    p.add_argument(
+        "--study-context",
+        default=None,
+        help="Path to a text file describing the study and survey question(s). "
+             "Its contents are injected into coder and theme coder prompts.",
+    )
     return p.parse_args()
 
 
@@ -328,6 +334,17 @@ def main():
     print(f"Provider: {args.provider} / {model}")
     print(f"Coders: {args.n_coders}  |  Theme coders: {args.n_theme_coders}  |  Batch size: {args.batch_size}  |  Coder batch: {args.coder_batch_size}")
 
+    # Load study context — accepts a file path or a literal string
+    study_context = None
+    if args.study_context:
+        ctx_path = Path(args.study_context)
+        if ctx_path.exists():
+            study_context = ctx_path.read_text(encoding="utf-8").strip()
+            print(f"Study context loaded from {ctx_path} ({len(study_context)} chars)")
+        else:
+            study_context = args.study_context.strip()
+            print(f"Study context: {study_context[:80]}{'...' if len(study_context) > 80 else ''}")
+
     # Build client
     client_kwargs = {}
     if args.rpm is not None:
@@ -344,6 +361,7 @@ def main():
         top_k_similar=args.top_k_similar,
         top_k_quotes=args.top_k_quotes,
         codebook_path=str(codebook_path),
+        study_context=study_context,
     )
 
     themes = pipeline.run(data)

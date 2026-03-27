@@ -46,6 +46,7 @@ class ThematicLMPipeline:
         batch_size: int = 10,
         coder_batch_size: int = 20,
         codebook_path: Optional[str] = None,
+        study_context: Optional[str] = None,
     ):
         """
         Args:
@@ -61,8 +62,11 @@ class ThematicLMPipeline:
             batch_size: Items processed per aggregation batch (goes to reviewer).
             coder_batch_size: Items sent to coder in a single API call.
             codebook_path: If set, save/load the codebook from this JSON file.
+            study_context: Optional description of the study and survey questions,
+                           injected into coder and theme coder system prompts.
         """
         self.client = client
+        self.study_context = study_context
         self.n_coders = n_coders
         self.n_theme_coders = n_theme_coders
         self.top_k_quotes = top_k_quotes
@@ -171,7 +175,7 @@ class ThematicLMPipeline:
                 # Send items to the coder in mini-batches
                 for mini_start in range(0, len(batch_items), self.coder_batch_size):
                     mini_batch = batch_items[mini_start : mini_start + self.coder_batch_size]
-                    codes = coder_agent_batch(self.client, mini_batch, identity)
+                    codes = coder_agent_batch(self.client, mini_batch, identity, self.study_context)
                     all_coder_outputs[coder_idx].extend(codes)
 
             # Aggregate codes from all coders in this batch
@@ -231,6 +235,7 @@ class ThematicLMPipeline:
                 codebook_json,
                 identity=identity,
                 top_k=self.top_k_quotes,
+                study_context=self.study_context,
             )
             all_theme_outputs.append(themes)
 

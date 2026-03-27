@@ -24,6 +24,81 @@ from datetime import datetime
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
+# Study context
+#
+# BASE_STUDY_CONTEXT is injected into every column's analysis.
+# COLUMN_CONTEXTS lets you append column-specific text (e.g. the exact survey
+# question) on top of the base. If a column has no entry here, only the base
+# context is used. Set either to None / empty dict to disable.
+# ---------------------------------------------------------------------------
+
+BASE_STUDY_CONTEXT = """This study investigates how people perceive and interpret data visualizations
+showing political and social trends. Participants were shown a series of charts
+and asked open-ended questions about their reactions, understanding, and attitudes."""
+
+COLUMN_CONTEXTS = {
+    "pq_trustReason": (
+        'The column contains responses to: "Why do you trust or distrust this visualization?"'
+    ),
+    "pq_surpriseReason": (
+        'The column contains responses to: "What, if anything, surprised you about this visualization?"'
+    ),
+    "pq_additionalComments": (
+        "The column contains open-ended additional comments participants chose to leave at the end of the study."
+    ),
+    "memTrans_taskDescription": (
+        "The column contains participants' free-text descriptions of the task they were asked to perform "
+        "during the memorability transfer phase of the study."
+    ),
+    "eliciTrain_taskDescription": (
+        "The column contains participants' free-text descriptions of the task they were asked to perform "
+        "during the elicitation training phase of the study."
+    ),
+    "viz_summary_SPV_violgoals_other_pre": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "support for political violence goals. Collected before any experimental manipulation."
+    ),
+    "viz_summary_SUP_ban_other_pre": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "support for banning far-right rallies. Collected before any experimental manipulation."
+    ),
+    "viz_summary_SUP_court_other_pre": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "support for ignoring court rulings. Collected before any experimental manipulation."
+    ),
+    "viz_summary_SUP_laws_other_pre": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "support for partisan laws. Collected before any experimental manipulation."
+    ),
+    "viz_summary_feeling_thermometer": (
+        "The column contains participants' written summaries of a visualization showing feeling "
+        "thermometer trends (affective ratings toward political groups over time)."
+    ),
+    "viz_summary_trend_pres_approval": (
+        "The column contains participants' written summaries of a visualization showing presidential "
+        "approval rating trends over time."
+    ),
+    "viz_summary_trend_economy_right_track": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "public opinion on whether the economy is on the right track."
+    ),
+    "viz_summary_trend_immigration": (
+        "The column contains participants' written summaries of a visualization showing trends in "
+        "public attitudes toward immigration."
+    ),
+}
+
+
+def build_study_context(column: str) -> str:
+    """Combine base context with any column-specific text."""
+    parts = [BASE_STUDY_CONTEXT.strip()]
+    extra = COLUMN_CONTEXTS.get(column)
+    if extra:
+        parts.append(extra.strip())
+    return "\n\n".join(parts)
+
+
+# ---------------------------------------------------------------------------
 # Columns worth analysing (free-text, avg response length > 70 chars)
 # ---------------------------------------------------------------------------
 
@@ -77,6 +152,7 @@ def run_column(col: str, args, limit: int = None) -> dict:
         "--n-theme-coders", str(args.n_theme_coders),
         "--batch-size", str(args.batch_size),
         "--results-dir", args.results_dir,
+        "--study-context", build_study_context(col),
     ]
     if limit:
         cmd += ["--limit", str(limit)]

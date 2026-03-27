@@ -20,11 +20,11 @@ from .llm import LLMClient
 # Prompts (from Appendix B of the paper, lightly adapted)
 # ---------------------------------------------------------------------------
 
-_CODER_SYSTEM = """You are a coder in thematic analysis of social media data.
-When given a social media post, write 1-3 codes for the post. The code should \
-capture concepts or ideas with the most analytical interest.
-For each code, extract a representative quote from the post. The quote must be \
-a verbatim extract from the text.
+_CODER_SYSTEM = """You are a coder in thematic analysis of short text responses from online studies.
+{study_context_block}When given a text response, write 1-3 codes that capture concepts or ideas with \
+the most analytical interest relevant to the study context.
+For each code, extract a representative quote from the response. The quote must \
+be a verbatim extract from the text.
 {identity_block}
 Respond with a JSON object in this exact format:
 {{
@@ -34,29 +34,29 @@ Respond with a JSON object in this exact format:
   ]
 }}"""
 
-_CODER_BATCH_SYSTEM = """You are a coder in thematic analysis of social media data.
-You will receive multiple posts, each with a unique ID.
-For EACH post independently, write 1-3 codes that capture concepts or ideas \
-with the most analytical interest.
-For each code, extract a verbatim quote from THAT SPECIFIC post only — never \
-mix quotes across posts.
+_CODER_BATCH_SYSTEM = """You are a coder in thematic analysis of short text responses from online studies.
+{study_context_block}You will receive multiple responses, each with a unique ID.
+For EACH response independently, write 1-3 codes that capture concepts or ideas \
+with the most analytical interest relevant to the study context.
+For each code, extract a verbatim quote from THAT SPECIFIC response only — never \
+mix quotes across responses.
 {identity_block}
 Respond with a JSON object in this exact format:
 {{
   "items": [
     {{
-      "id": "<post id exactly as given>",
+      "id": "<response id exactly as given>",
       "codes": [
-        {{"code": "<short label>", "quote": "<verbatim quote from this post only>"}},
+        {{"code": "<short label>", "quote": "<verbatim quote from this response only>"}},
         ...
       ]
     }},
     ...
   ]
 }}
-Include one entry for every post ID provided. Output only valid JSON."""
+Include one entry for every response ID provided. Output only valid JSON."""
 
-_AGGREGATOR_SYSTEM = """You are an aggregator in thematic analysis of social media data.
+_AGGREGATOR_SYSTEM = """You are an aggregator in thematic analysis of short text responses from online studies.
 Your job is to take codes and their corresponding quotes from multiple coders, \
 merge codes with similar meanings (retaining distinctions where important), \
 and keep the top {top_k} most relevant quotes per code.
@@ -73,7 +73,7 @@ Respond with a JSON object:
 }}
 Output only valid JSON. Nothing else."""
 
-_REVIEWER_SYSTEM = """You are a reviewer in thematic analysis of social media data.
+_REVIEWER_SYSTEM = """You are a reviewer in thematic analysis of short text responses from online studies.
 You will receive two items:
 1. "new_codes": fresh codes and quotes just produced by a coder.
 2. "similar_codes": existing codes from the codebook that are semantically close.
@@ -98,9 +98,10 @@ Respond with a JSON object:
 }}
 Output only valid JSON. Nothing else."""
 
-_THEME_CODER_SYSTEM = """You are a theme coder in thematic analysis of social media data.
-You will receive a codebook in JSON containing codes and sample quotes.
-Identify overarching themes that reflect deeper meanings of the data.
+_THEME_CODER_SYSTEM = """You are a theme coder in thematic analysis of short text responses from online studies.
+{study_context_block}You will receive a codebook in JSON containing codes and sample quotes.
+Identify overarching themes that reflect deeper meanings of the data, \
+relevant to the study context.
 For each theme, provide:
   - A short title
   - One sentence describing what the theme captures
@@ -158,6 +159,7 @@ def coder_agent_batch(
     client: LLMClient,
     items: list[dict],
     identity: Optional[str] = None,
+    study_context: Optional[str] = None,
 ) -> list[dict]:
     """
     Code multiple pieces of text in a single API call.
@@ -165,6 +167,7 @@ def coder_agent_batch(
     Args:
         items: List of {"id": str, "text": str} dicts.
         identity: Optional identity string for the coder.
+        study_context: Optional description of the study and survey questions.
 
     Returns:
         List of {"code": str, "quote": str, "quote_id": str}
@@ -178,7 +181,15 @@ def coder_agent_batch(
         if identity
         else ""
     )
-    system = _CODER_BATCH_SYSTEM.format(identity_block=identity_block)
+    study_context_block = (
+        f"The study context is: {study_context}\n\n"
+        if study_context
+        else ""
+    )
+    system = _CODER_BATCH_SYSTEM.format(
+        identity_block=identity_block,
+        study_context_block=study_context_block,
+    )
 
     posts_text = "\n\n".join(
         f"Post ID: {item['id']}\n{item['text']}" for item in items
@@ -198,7 +209,7 @@ def coder_agent_batch(
         print(f"[coder_agent_batch] Error (batch size {len(items)}): {e} — falling back to individual calls")
         output = []
         for item in items:
-            output.extend(coder_agent(client, item["text"], item["id"], identity))
+            output.extend(coder_agent(client, item["text"], item["id"], identity, study_context))
         return output
 
 
@@ -207,6 +218,7 @@ def coder_agent(
     text: str,
     quote_id: str,
     identity: Optional[str] = None,
+    study_context: Optional[str] = None,
 ) -> list[dict]:
     """
     Code a single piece of text.
@@ -220,7 +232,15 @@ def coder_agent(
         if identity
         else ""
     )
-    system = _CODER_SYSTEM.format(identity_block=identity_block)
+    study_context_block = (
+        f"The study context is: {study_context}\n\n"
+        if study_context
+        else ""
+    )
+    system = _CODER_SYSTEM.format(
+        identity_block=identity_block,
+        study_context_block=study_context_block,
+    )
     messages = [{"role": "user", "content": f"Post ID: {quote_id}\n\nText:\n{text}"}]
 
     try:
@@ -311,6 +331,7 @@ def theme_coder_agent(
     codebook_json: str,
     identity: Optional[str] = None,
     top_k: int = 20,
+    study_context: Optional[str] = None,
 ) -> list[dict]:
     """
     Identify themes from the codebook.
@@ -324,7 +345,16 @@ def theme_coder_agent(
         if identity
         else ""
     )
-    system = _THEME_CODER_SYSTEM.format(top_k=top_k, identity_block=identity_block)
+    study_context_block = (
+        f"The study context is: {study_context}\n\n"
+        if study_context
+        else ""
+    )
+    system = _THEME_CODER_SYSTEM.format(
+        top_k=top_k,
+        identity_block=identity_block,
+        study_context_block=study_context_block,
+    )
     messages = [{"role": "user", "content": f"Codebook:\n{codebook_json}"}]
 
     try:
