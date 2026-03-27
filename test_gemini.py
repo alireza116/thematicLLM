@@ -17,8 +17,8 @@ from thematic_lm import LLMClient, ThematicLMPipeline, trustworthiness_report
 # ---------------------------------------------------------------------------
 
 client = LLMClient(
-    provider="gemini",
-    model="gemini-2.0-flash",   # fast + cheap; swap for "gemini-1.5-pro" for quality
+    provider="openai",
+    model="gpt-4o",   # fast + cheap; swap for "gemini-1.5-pro" for quality
     # api_key="AIza...",        # or set GEMINI_API_KEY in .env
 )
 
@@ -67,9 +67,9 @@ for t in themes:
     print(f"\n  Theme: {t['theme']}")
     print(f"  {t['description']}")
 
-# ---------------------------------------------------------------------------
+
 # 4. Credibility evaluation
-# ---------------------------------------------------------------------------
+
 
 print("\n--- Evaluating credibility ---")
 data_lookup = {item["id"]: item["text"] for item in data}
