@@ -4,6 +4,5 @@ __pycache__/
 *.pyo
 .DS_Store
 codebook.json
-results/
 .venv/
 .claude/
