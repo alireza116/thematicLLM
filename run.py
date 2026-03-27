@@ -187,6 +187,73 @@ def load_data(path: str, column: str, limit: Optional[int], random: bool = False
 
 
 # ---------------------------------------------------------------------------
+# Coverage computation
+# ---------------------------------------------------------------------------
+
+def compute_coverage(themes: list[dict], codebook: dict, total: int) -> tuple[list[dict], dict]:
+    """
+    Enrich themes with true quote coverage derived from codebook code lookups.
+
+    For each theme, reads the 'codes' list output by the theme coder, looks up
+    every matching code in the codebook, and collects all quote_ids stored there.
+    This gives the full set of responses that contributed to a theme — not just
+    the representative sample in theme['quote_ids'].
+
+    Returns:
+        themes         — same list, each dict enriched with:
+                           all_quote_ids (list of all unique quote/participant IDs)
+                           quote_count   (int)
+                           coverage_pct  (float, 0–100)
+        response_themes — {participant_id: [theme_name, ...]}
+    """
+    # Build a lowercased lookup for fuzzy code matching
+    cb_lower = {k.lower(): k for k in codebook}
+
+    response_themes: dict[str, list[str]] = {}
+
+    for theme in themes:
+        theme_name = theme.get("theme", "")
+        code_labels = theme.get("codes", [])
+
+        all_ids: set[str] = set()
+        for label in code_labels:
+            # Exact match first, then case-insensitive fallback
+            cb_key = label if label in codebook else cb_lower.get(label.lower())
+            if cb_key:
+                all_ids.update(codebook[cb_key].get("quote_ids", []))
+
+        # Fallback: if the theme coder listed no codes, use the sampled quote_ids
+        if not all_ids:
+            all_ids = set(theme.get("quote_ids", []))
+
+        theme["all_quote_ids"] = sorted(all_ids)
+        theme["quote_count"] = len(all_ids)
+        theme["coverage_pct"] = round(len(all_ids) / total * 100, 1) if total else 0.0
+
+        for pid in all_ids:
+            response_themes.setdefault(pid, []).append(theme_name)
+
+    return themes, response_themes
+
+
+def save_coverage_csv(
+    themes: list[dict],
+    response_themes: dict[str, list[str]],
+    all_participant_ids: list[str],
+    path: "Path",
+) -> None:
+    """Write a binary participant × theme CSV (1 = response contributed to theme)."""
+    import csv
+    theme_names = [t.get("theme", f"Theme {i}") for i, t in enumerate(themes, 1)]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["participant_id"] + theme_names)
+        for pid in all_participant_ids:
+            pid_themes = set(response_themes.get(pid, []))
+            writer.writerow([pid] + [1 if t in pid_themes else 0 for t in theme_names])
+
+
+# ---------------------------------------------------------------------------
 # Output helpers
 # ---------------------------------------------------------------------------
 
@@ -239,14 +306,29 @@ def build_report_md(
     # Themes
     lines += [f"## Themes ({len(themes)} identified)", ""]
 
+    # Coverage summary table (if coverage data present)
+    if any("quote_count" in t for t in themes):
+        lines += ["### Coverage Summary", ""]
+        lines += ["| # | Theme | Quotes | Coverage |", "|---|---|---|---|"]
+        for i, theme in enumerate(themes, 1):
+            title = theme.get("theme", f"Theme {i}")
+            count = theme.get("quote_count", "—")
+            pct = theme.get("coverage_pct", "—")
+            pct_str = f"{pct}%" if isinstance(pct, (int, float)) else pct
+            lines.append(f"| {i} | {title} | {count} | {pct_str} |")
+        lines += ["", "---", ""]
+
     for i, theme in enumerate(themes, 1):
         title = theme.get("theme", f"Theme {i}")
         description = theme.get("description", "")
         quotes = theme.get("quotes", [])
         quote_ids = theme.get("quote_ids", [])
+        count = theme.get("quote_count")
+        pct = theme.get("coverage_pct")
 
+        coverage_str = f" ({count} quotes · {pct}%)" if count is not None else ""
         lines += [
-            f"### {i}. {title}",
+            f"### {i}. {title}{coverage_str}",
             "",
             f"{description}",
             "",
@@ -366,9 +448,28 @@ def main():
 
     themes = pipeline.run(data)
 
-    # Save themes JSON
+    # Compute participant coverage via codebook code lookups
+    if codebook_path.exists():
+        try:
+            codebook_data = json.loads(codebook_path.read_text())
+            all_participant_ids = [item["id"] for item in data]
+            themes, response_themes = compute_coverage(themes, codebook_data, len(data))
+
+            # participant_themes.json
+            pt_path = out_dir / "participant_themes.json"
+            pt_path.write_text(json.dumps(response_themes, indent=2, ensure_ascii=False))
+            print(f"Participant→themes map saved → {pt_path}")
+
+            # coverage.csv
+            csv_path = out_dir / "coverage.csv"
+            save_coverage_csv(themes, response_themes, all_participant_ids, csv_path)
+            print(f"Coverage CSV saved → {csv_path}")
+        except Exception as e:
+            print(f"[coverage] Could not compute coverage: {e}")
+
+    # Save themes JSON (with coverage fields if computed)
     themes_path.write_text(json.dumps(themes, indent=2, ensure_ascii=False))
-    print(f"\nThemes saved → {themes_path}")
+    print(f"Themes saved → {themes_path}")
 
     # Trustworthiness evaluation
     trust_report = None
@@ -401,7 +502,10 @@ def main():
     print(f"  {len(themes)} themes identified from {len(data)} responses")
     print(f"{'='*60}")
     for i, t in enumerate(themes, 1):
-        print(f"  {i}. {t.get('theme', '')}")
+        count = t.get("quote_count")
+        pct = t.get("coverage_pct")
+        coverage = f"  [{count} quotes · {pct}%]" if count is not None else ""
+        print(f"  {i}. {t.get('theme', '')}{coverage}")
         print(f"     {t.get('description', '')[:80]}...")
     print()
 

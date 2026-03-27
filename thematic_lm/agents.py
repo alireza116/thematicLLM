@@ -105,6 +105,7 @@ relevant to the study context.
 For each theme, provide:
   - A short title
   - One sentence describing what the theme captures
+  - Every codebook code that belongs to this theme (list all matching code labels exactly as they appear in the codebook)
   - The {top_k} most relevant quotes (with their IDs)
 {identity_block}
 Respond with a JSON object:
@@ -113,6 +114,7 @@ Respond with a JSON object:
     {{
       "theme": "<title>",
       "description": "<one sentence>",
+      "codes": ["<exact codebook label>", ...],
       "quotes": ["<quote1>", ...],
       "quote_ids": ["<id1>", ...]
     }},
@@ -124,12 +126,14 @@ Output only valid JSON. Nothing else."""
 _THEME_AGGREGATOR_SYSTEM = """You are a theme aggregator in thematic analysis.
 Merge themes with overlapping meanings from multiple coders into a final coherent set.
 Retain distinct perspectives. Keep the top {top_k} quotes per theme.
+Preserve and union the "codes" lists when merging themes.
 Respond with a JSON object:
 {{
   "themes": [
     {{
       "theme": "<title>",
       "description": "<one sentence>",
+      "codes": ["<codebook label>", ...],
       "quotes": ["<quote1>", ...],
       "quote_ids": ["<id1>", ...]
     }},
