@@ -1,3 +1,8 @@
 A main study context:
+This study examines how people remember corrective information shown in data visualizations about members of the other political party. 
+In particular, it tests whether asking participants to make predictions first can reduce memory for the actual data, because they may focus more on whether their guess was accurate than on key features of the visualization, such as the average response of the out-party. 
+For instance, if a user gives a broad categorical guess (e.g., ‘low’ or ‘high’) that falls within the displayed confidence interval, they may conclude their belief is ‘close enough,’ reducing motivation to engage more deeply with the data. 
+To investigate these dynamics, we conducted a controlled 3 × 2 between-subjects study (N = 540) that manipulates elicitation precision (none, low-precision, or high-precision) and the presence of uncertainty representations (mean-only vs. mean+interval).
 
-and the specific question.
+The column being analysed contains responses to the question:
+"Over the past 12 months, what was the trend in the percentage of [outpartisans] who approved of the job Donald J. Trump was doing on Immigration?"

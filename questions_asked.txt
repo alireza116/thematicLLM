@@ -1,0 +1,15 @@
+"SPV_Viogoals" : "How much do [outpartisans] support using violence to advance [outpartisans]' political goals?"
+"SUP_ban" : "How much do [outpartisans] support banning [FAR-LEFT | FAR-RIGHT] group rallies in the state capital?"
+"SUP_court" : "How much do [outpartisans] support ignoring controversial court rulings by [in-party] judges?"
+"SUP_laws" : "How much do [outpartisans] support passing laws that would make it easier for [outpartisans] (and harder for [inpartisans]) to get elected?"
+
+"feeling_thermometer" : "Over the past 12 months, what was the trend in how [outpartisans]’ feel about [inpartisans]? This chart shows responses on a “feeling thermometer”, where 0 indicates very cold/unfavorable feelings and 100 indicates very warm/favorable feelings."
+"pres_approval" : "Over the past 12 months, what was the trend in the percentage of [outpartisans] who approved of the job Donald J. Trump was doing as President of the United States?"
+"trend_economy" : "Over the past 12 months, what was the trend in the percentage of [outpartisans] who thought the American economy was on the right track?"
+"trend_immigration" : "Over the past 12 months, what was the trend in the percentage of [outpartisans] who approved of the job Donald J. Trump was doing on Immigration?"
+
+"pq_trustReason" : "Please explain in 1-2 sentences why you gave the ratings above about the trustworthiness and accuracy of the data."
+"pq_supriseReason" : "Please explain in 1-2 sentences why you did or did not feel surprised when viewing the data."
+"pq_additinonalComments" : "Additional Comments (Optional)"
+
+File_path qualitative data : "https://docs.google.com/spreadsheets/d/1MR1NfN9-B6TtxrWxoDEgHqGoQyqKCZxndTQ2iGh0-GU/edit?gid=1716603240#gid=1716603240"
