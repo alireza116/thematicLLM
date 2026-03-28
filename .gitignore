@@ -3,7 +3,5 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
-codebook.json
-results/
 .venv/
 .claude/
