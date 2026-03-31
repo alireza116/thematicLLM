@@ -39,8 +39,8 @@ def parse_args():
     )
     p.add_argument(
         "--data", "-d",
-        default="data/qualitative_data_VIS_tidy.xlsx",
-        help="Path to the data file (.xlsx or .csv). Default: data/qualitative_data_VIS_tidy.xlsx",
+        default="data/qual_data_TimeSeries.xlsx",
+        help="Path to the data file (.xlsx or .csv). Default: data/qual_data_TimeSeries.xlsx",
     )
     p.add_argument(
         "--provider",
@@ -70,13 +70,13 @@ def parse_args():
     p.add_argument(
         "--batch-size",
         type=int,
-        default=10,
+        default=20,
         help="Items per coding batch (default: 10).",
     )
     p.add_argument(
         "--coder-batch-size",
         type=int,
-        default=20,
+        default=40,
         help="Items sent to coder agent in a single API call (default: 20).",
     )
     p.add_argument(
@@ -119,7 +119,7 @@ def parse_args():
         "--rpm",
         type=int,
         default=None,
-        help="Requests per minute cap. Defaults: gemini=15, openai=500, anthropic=50. "
+        help="Requests per minute cap. Defaults: gemini=15, openai=5000, anthropic=50. "
              "Set to 0 to disable.",
     )
     p.add_argument(

@@ -1,8 +1,10 @@
 A main study context:
-This study examines how people remember corrective information shown in data visualizations about members of the other political party. 
-In particular, it tests whether asking participants to make predictions first can reduce memory for the actual data, because they may focus more on whether their guess was accurate than on key features of the visualization, such as the average response of the out-party. 
-For instance, if a user gives a broad categorical guess (e.g., ‘low’ or ‘high’) that falls within the displayed confidence interval, they may conclude their belief is ‘close enough,’ reducing motivation to engage more deeply with the data. 
-To investigate these dynamics, we conducted a controlled 3 × 2 between-subjects study (N = 540) that manipulates elicitation precision (none, low-precision, or high-precision) and the presence of uncertainty representations (mean-only vs. mean+interval).
+This study examines how people remember corrective information shown in data visualizations about members of the other political party.
+It involves a controlled 3 x 2 between-subjects experiment that manipulates two factors. The first factor (visualization condition) determines whether the data visualization only shows the average outparty response (Mean-only condition) or includes an additional representation of the uncertainty or range of outparty responses (Mean+Interval condition). 
+The second factor (prediction condition) determines whether/how participants make a prediction about outparty views before seeing the data, with three conditions: No-Prediction (no prediction made), Low-Precision prediction (participant makes a broad categorical guess, e.g., ‘low’, ‘medium’, or ‘high’), and High-Precision prediction (participant makes a precise guess about the average outparty response on the same continuous scale).
 
-The column being analysed contains responses to the question:
-"Over the past 12 months, what was the trend in the percentage of [outpartisans] who approved of the job Donald J. Trump was doing on Immigration?"
+The goal of the study is to investigate how these experimental factors affect three outcomes: 1) how participants attend to (and remember) different aspects of the visualization; 2) participants’ feelings of surprise; and 3) participants’ perceptions about the trustworthiness of the data presented in the visualizations. 
+The overarching hypothesis is that people may have different reactions to observing data that conflicts with their prior beliefs or predictions about a political outparty, and that both the elements of the visualization and the requirement to make a prediction may jointly influence these outcomes. 
+Thus we are interested in identifying themes in participants’ responses that give insight into how they processed information in specific visualizations as whether as their global perceptions of the surprisingness and trustworthiness of the data.
+
+The column being analysed are participants Time-Series estimates about outparty views. 
